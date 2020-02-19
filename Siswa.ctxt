@@ -1,0 +1,26 @@
+#BlueJ class context
+comment0.target=Siswa
+comment0.text=\n\ Write\ a\ description\ of\ class\ Siswa\ here.\n\n\ @author\ Rohman\n\ @version\ v0.1.0\n
+comment1.params=args
+comment1.target=void\ main(java.lang.String[])
+comment10.params=
+comment10.target=void\ updateData()
+comment11.params=
+comment11.target=void\ deleteData()
+comment2.params=
+comment2.target=Siswa()
+comment3.params=
+comment3.target=void\ Start()
+comment4.params=
+comment4.target=void\ selectMenu()
+comment5.params=
+comment5.target=void\ searchData()
+comment6.params=
+comment6.target=void\ showData()
+comment7.params=siswa
+comment7.target=void\ getAllData(SiswaModel)
+comment8.params=query
+comment8.target=void\ getData(java.lang.String)
+comment9.params=
+comment9.target=void\ insertData()
+numComments=12
