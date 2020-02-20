@@ -10,6 +10,8 @@ import java.util.*;
 public class Siswa {
     ConnectDB db;
 
+    String baseQuery = "SELECT siswa.*, kelas.nama AS kelas FROM siswa LEFT JOIN kelas_siswa USING(id_siswa) LEFT JOIN kelas USING(id_kelas)";
+
     public static void main(String[] args) throws Exception {
         Siswa siswa = new Siswa();
         siswa.Start();
@@ -80,9 +82,10 @@ public class Siswa {
 
         scan.close();
 
+        String query = this.baseQuery + " WHERE ";
         String likeQuery = " LIKE '%" + search + "%' ";
-        String query = "SELECT * FROM siswa WHERE id_siswa" + likeQuery + "OR nama " + likeQuery + "OR ttl" + likeQuery
-                + "OR jk" + likeQuery;
+        query += "id_siswa" + likeQuery + "OR siswa.nama " + likeQuery + "OR ttl" + likeQuery + "OR jk" + likeQuery
+                + "OR kelas.nama" + likeQuery;
         this.getData(query);
     }
 
@@ -91,7 +94,7 @@ public class Siswa {
     }
 
     private void getAllData(SiswaModel siswa) {
-        String query = "SELECT * FROM siswa";
+        String query = this.baseQuery;
 
         if (siswa != null) {
             query += " WHERE ";
@@ -108,18 +111,18 @@ public class Siswa {
         try {
             ResultSet rs = this.db.stmt.executeQuery(query);
 
-            String format = "%-10s %-25s %-30s %-15s %n";
-            System.out.printf(format, "ID Siswa", "Nama Siswa", "Tempat, Tgl lahir", "Jenis Kelamin");
+            String format = "%-10s %-25s %-30s %-15s %-10s %n";
+            System.out.printf(format, "ID Siswa", "Nama Siswa", "Tempat, Tgl lahir", "Jenis Kelamin", "Kelas");
             while (rs.next()) {
                 System.out.printf(format, rs.getString("id_siswa"), rs.getString("nama"), rs.getString("ttl"),
-                        rs.getString("jk"));
+                        rs.getString("jk"), rs.getString("kelas"));
                 System.out.println();
             }
             rs.close();
 
             this.selectMenu();
         } catch (SQLException e) {
-            System.out.println("Tidak bisa mendapatkan data siswa. Error: " + e.getMessage());
+            System.out.println("Gagal mendapatkan data siswa. Error: " + e.getMessage());
         }
     }
 
@@ -139,6 +142,9 @@ public class Siswa {
             System.out.println("Masukan Jenis Kelamin Siswa: ");
             String jk = scan.nextLine();
 
+            System.out.println("Masukan ID Kelas Siswa: ");
+            int idKelas = scan.nextInt();
+
             scan.close();
 
             String query = "INSERT INTO siswa(id_siswa, nama, ttl, jk) VALUES(?,?,?,?)";
@@ -154,9 +160,28 @@ public class Siswa {
             prep.executeBatch();
             this.db.conn.setAutoCommit(true);
 
+            this.createKelasSiswa(idKelas, id);
+
             this.showData();
         } catch (SQLException e) {
-            System.out.println("Tidak bisa menambah data. Error: " + e.getMessage());
+            System.out.println("Gagal menambah data. Error: " + e.getMessage());
+        }
+    }
+
+    private void createKelasSiswa(int idKelas, int idSiswa) {
+        try {
+            String query = "INSERT INTO kelas_siswa(id_kelas, id_siswa) VALUES(?,?)";
+            PreparedStatement prep = this.db.conn.prepareStatement(query);
+
+            prep.setInt(1, idKelas);
+            prep.setInt(2, idSiswa);
+            prep.addBatch();
+
+            this.db.conn.setAutoCommit(false);
+            prep.executeBatch();
+            this.db.conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            System.out.println("Gagal melakukan relasi siswa ke kelas. Error: " + e.getMessage());
         }
     }
 
@@ -176,6 +201,9 @@ public class Siswa {
             System.out.println("Masukan Jenis Kelamin Siswa Baru: ");
             String jk = scan.nextLine();
 
+            System.out.println("Masukan ID Kelas Siswa Baru: ");
+            int idKelas = scan.nextInt();
+
             scan.close();
 
             String query = "UPDATE siswa SET nama=?,ttl=?,jk=? " + "WHERE id_siswa=?";
@@ -191,11 +219,29 @@ public class Siswa {
             prep.executeUpdate();
             this.db.conn.setAutoCommit(true);
 
+            this.updateKelasSiswa(idKelas, id);
+
             SiswaModel siswa = new SiswaModel();
             siswa.id_siswa = id;
             this.getAllData(siswa);
         } catch (SQLException e) {
             System.out.println("Gagal mengedit data. Error: " + e.getMessage());
+        }
+    }
+
+    private void updateKelasSiswa(int idKelas, int idSiswa) {
+        try {
+            String query = "UPDATE kelas_siswa SET id_kelas=? " + "WHERE id_siswa=?";
+            PreparedStatement prep = this.db.conn.prepareStatement(query);
+
+            prep.setInt(1, idKelas);
+            prep.setInt(2, idSiswa);
+
+            this.db.conn.setAutoCommit(false);
+            prep.executeUpdate();
+            this.db.conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            System.out.println("Gagal update relasi siswa ke kelas. Error: " + e.getMessage());
         }
     }
 
@@ -220,7 +266,7 @@ public class Siswa {
 
             System.out.println("Berhasil menghapus data siswa.");
         } catch (SQLException e) {
-            System.out.println("Tidak bisa menghapus data. Error: " + e.getMessage());
+            System.out.println("Gagal menghapus data. Error: " + e.getMessage());
         }
     }
 }
